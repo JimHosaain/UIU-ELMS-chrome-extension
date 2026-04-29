@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "ELMS Notification Helper",
+  "version": "0.1.0",
+  "description": "Detects new ELMS updates in your logged-in browser session and shows browser notifications.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "alarms",
+    "notifications",
+    "scripting"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ELMS Notification Helper"
+  },
+  "options_page": "options.html"
+}

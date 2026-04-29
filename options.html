@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ELMS Notification Helper Options</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="extension-shell options-shell">
+    <main class="panel wide-panel">
+      <header class="panel-header">
+        <div>
+          <p class="eyebrow">Extension settings</p>
+          <h1>ELMS Notification Helper</h1>
+        </div>
+        <a class="link-button" href="popup.html" target="_blank" rel="noreferrer">Open Popup</a>
+      </header>
+
+      <section class="card">
+        <div class="section-heading">
+          <h2>Connection settings</h2>
+          <p class="hint">Enter the ELMS base URL for your university portal.</p>
+        </div>
+
+        <label class="field">
+          <span>ELMS base URL</span>
+          <input id="baseUrlInput" type="url" placeholder="https://elms.your-university.edu" />
+        </label>
+
+        <label class="field">
+          <span>Check interval</span>
+          <select id="intervalSelect">
+            <option value="5">Every 5 minutes</option>
+            <option value="15">Every 15 minutes</option>
+            <option value="30">Every 30 minutes</option>
+            <option value="60">Every 60 minutes</option>
+          </select>
+        </label>
+
+        <label class="toggle-row">
+          <span>Enable notifications</span>
+          <input id="notificationsToggle" type="checkbox" />
+        </label>
+
+        <label class="field">
+          <span>Theme</span>
+          <select id="themeSelect">
+            <option value="system">Follow system theme</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+
+        <div class="card-actions">
+          <button id="saveButton" class="primary-button" type="button">Save Settings</button>
+          <button id="testButton" class="secondary-button" type="button">Test Now</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <h2>Privacy notes</h2>
+        </div>
+        <ul class="notes-list">
+          <li>This extension does not collect or store your ELMS password.</li>
+          <li>It uses your existing browser session and only stores minimal local item data.</li>
+          <li>All checking happens locally in your browser.</li>
+        </ul>
+      </section>
+
+      <p id="statusText" class="status-line"></p>
+      <p id="errorText" class="error-text" hidden></p>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>

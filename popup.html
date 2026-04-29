@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ELMS Notification Helper</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="extension-shell popup-shell">
+    <main class="panel">
+      <header class="panel-header">
+        <div>
+          <button id="emailUpdatesButton" class="secondary-button" type="button">Email Updates</button>
+          <p class="eyebrow">ELMS monitor</p>
+          <h1>Notification Helper</h1>
+        </div>
+        <span id="statusBadge" class="status-badge status-inactive">Inactive</span>
+      </header>
+
+      <section class="card">
+        <div class="card-row">
+          <div>
+            <p class="label">Status</p>
+            <p id="statusText" class="value">Waiting for settings.</p>
+          </div>
+          <button id="checkNowButton" class="primary-button" type="button">Check Now</button>
+        </div>
+        <p id="lastCheckedText" class="hint">Last checked: never</p>
+        <div class="card-actions" style="margin-top: 12px;">
+          <button id="grantPermissionButton" class="secondary-button" type="button">Grant ELMS Permission</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <h2>Latest updates</h2>
+          <p class="hint">Recently detected ELMS items saved locally on this device.</p>
+        </div>
+        <ul id="updatesList" class="updates-list"></ul>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <h2>Quick settings</h2>
+          <p class="hint">These settings are stored in chrome.storage.local.</p>
+        </div>
+
+        <label class="field">
+          <span>Check interval</span>
+          <select id="intervalSelect">
+            <option value="5">Every 5 minutes</option>
+            <option value="15">Every 15 minutes</option>
+            <option value="30">Every 30 minutes</option>
+            <option value="60">Every 60 minutes</option>
+          </select>
+        </label>
+
+        <label class="toggle-row">
+          <span>Enable notifications</span>
+          <input id="notificationsToggle" type="checkbox" />
+        </label>
+
+        <label class="field">
+          <span>Theme</span>
+          <select id="themeSelect">
+            <option value="system">Follow system theme</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+
+        <div class="card-actions">
+          <button id="saveQuickSettingsButton" class="secondary-button" type="button">Save Settings</button>
+          <a class="link-button" href="options.html" target="_blank" rel="noreferrer">Open Options</a>
+        </div>
+      </section>
+
+      <p id="errorText" class="error-text" hidden></p>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
