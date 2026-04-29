@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
 
 const DEFAULT_SETTINGS = {
   baseUrl: '',
+  studentEmail: '',
   checkIntervalMinutes: 15,
   notificationsEnabled: true,
   themeMode: 'system'
@@ -14,6 +15,7 @@ const DEFAULT_SETTINGS = {
 
 const ALARM_NAME = 'elms-periodic-check';
 const MAX_LATEST_UPDATES = 20;
+const MAX_TITLE_LENGTH = 140;
 
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureDefaults();
@@ -365,7 +367,7 @@ function buildItemKey(item) {
 }
 
 function mergeLatestUpdates(existingUpdates, newItems) {
-  const merged = [...newItems, ...existingUpdates];
+  const merged = [...newItems, ...existingUpdates].filter(isValidUpdateItem);
   const deduped = [];
   const seen = new Set();
 
@@ -397,7 +399,36 @@ async function getSeenItems() {
 
 async function getLatestUpdates() {
   const stored = await chrome.storage.local.get(STORAGE_KEYS.latestUpdates);
-  return stored[STORAGE_KEYS.latestUpdates] || [];
+  const latestUpdates = Array.isArray(stored[STORAGE_KEYS.latestUpdates]) ? stored[STORAGE_KEYS.latestUpdates] : [];
+  const sanitized = latestUpdates.filter(isValidUpdateItem).slice(0, MAX_LATEST_UPDATES);
+
+  if (sanitized.length !== latestUpdates.length || sanitized.some((item, index) => buildItemKey(item) !== buildItemKey(latestUpdates[index] || {}))) {
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.latestUpdates]: sanitized
+    });
+  }
+
+  return sanitized;
+}
+
+function isValidUpdateItem(item) {
+  const title = String(item?.title || '').trim();
+  const courseName = String(item?.courseName || '').trim();
+  const kind = String(item?.kind || '').trim();
+
+  if (!title || !courseName || !kind) {
+    return false;
+  }
+
+  if (title.length > MAX_TITLE_LENGTH) {
+    return false;
+  }
+
+  if (title.includes('\n') || title.includes('require(') || title.includes('function ')) {
+    return false;
+  }
+
+  return true;
 }
 
 async function updateStatus(patch) {

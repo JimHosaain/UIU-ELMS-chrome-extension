@@ -129,11 +129,17 @@ async function handleSaveQuickSettings() {
 }
 
 async function handleEmailUpdates() {
-  const data = await chrome.storage.local.get(STORAGE_KEYS.latestUpdates);
+  const data = await chrome.storage.local.get([STORAGE_KEYS.latestUpdates, STORAGE_KEYS.settings]);
   const latestUpdates = data[STORAGE_KEYS.latestUpdates] || [];
+  const studentEmail = (data[STORAGE_KEYS.settings] || {}).studentEmail || '';
 
   if (!latestUpdates.length) {
     setError('No updates to email yet.');
+    return;
+  }
+
+  if (!studentEmail) {
+    setError('Add a student email in Options first.');
     return;
   }
 
@@ -141,7 +147,7 @@ async function handleEmailUpdates() {
   const subject = encodeURIComponent('ELMS Updates');
   const body = encodeURIComponent(emailBody);
 
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  window.location.href = `mailto:${encodeURIComponent(studentEmail)}?subject=${subject}&body=${body}`;
 }
 
 async function refreshPopupState() {
@@ -245,34 +251,22 @@ async function refreshBackground() {
 }
 
 function formatEmailBody(updates) {
-  const lines = ['You have an update on ELMS. Check these courses:', ''];
-  const byCourse = {};
+  const latest = updates[0] || {};
+  const courseName = latest.courseName || 'Unknown course';
+  const title = latest.title || 'Untitled update';
+  const type = capitalize(latest.kind);
+  const time = latest.timestamp ? new Date(latest.timestamp).toLocaleString() : '';
 
-  for (const update of updates) {
-    const course = update.courseName || 'Unknown course';
-
-    if (!byCourse[course]) {
-      byCourse[course] = [];
-    }
-
-    byCourse[course].push(update);
-  }
-
-  for (const [course, courseUpdates] of Object.entries(byCourse)) {
-    lines.push(course);
-
-    for (const update of courseUpdates) {
-      const type = capitalize(update.kind);
-      const time = update.timestamp ? new Date(update.timestamp).toLocaleString() : '';
-      lines.push(`- ${update.title}`);
-      lines.push(`  ${type}${time ? ` • ${time}` : ''}`);
-    }
-
-    lines.push('');
-  }
-
-  lines.push('Detected and saved locally by ELMS Notification Helper extension.');
-  return lines.join('\n');
+  return [
+    'Hey buddy,',
+    '',
+    `You got an update from ${courseName}.`,
+    `Your teacher submitted: ${title}`,
+    type ? `Update type: ${type}` : '',
+    time ? `Time: ${time}` : '',
+    '',
+    'Detected and saved locally by ELMS Notification Helper extension.'
+  ].filter(Boolean).join('\n');
 }
 
 function capitalize(value) {

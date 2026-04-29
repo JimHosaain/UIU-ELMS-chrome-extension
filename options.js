@@ -1,5 +1,6 @@
 const DEFAULT_SETTINGS = {
   baseUrl: '',
+  studentEmail: '',
   checkIntervalMinutes: 15,
   notificationsEnabled: true,
   themeMode: 'system'
@@ -11,6 +12,7 @@ const STORAGE_KEYS = {
 
 const elements = {
   baseUrlInput: document.getElementById('baseUrlInput'),
+  studentEmailInput: document.getElementById('studentEmailInput'),
   intervalSelect: document.getElementById('intervalSelect'),
   notificationsToggle: document.getElementById('notificationsToggle'),
   themeSelect: document.getElementById('themeSelect'),
@@ -37,6 +39,7 @@ async function initializeOptions() {
   };
 
   elements.baseUrlInput.value = settings.baseUrl;
+  elements.studentEmailInput.value = settings.studentEmail || '';
   elements.intervalSelect.value = String(settings.checkIntervalMinutes);
   elements.notificationsToggle.checked = Boolean(settings.notificationsEnabled);
   elements.themeSelect.value = normalizeThemeMode(settings);
@@ -58,8 +61,16 @@ async function handleSave() {
     }
   }
 
+  const studentEmail = elements.studentEmailInput.value.trim();
+
+  if (studentEmail && !/^\S+@\S+\.\S+$/.test(studentEmail)) {
+    setError('Please enter a valid student email address.');
+    return;
+  }
+
   const nextSettings = {
     baseUrl,
+    studentEmail,
     checkIntervalMinutes: Number(elements.intervalSelect.value),
     notificationsEnabled: elements.notificationsToggle.checked,
     themeMode: elements.themeSelect.value
