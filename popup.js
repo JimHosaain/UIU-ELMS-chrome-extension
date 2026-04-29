@@ -22,17 +22,29 @@ const elements = {
   checkNowButton: document.getElementById('checkNowButton'),
   grantPermissionButton: document.getElementById('grantPermissionButton'),
   saveQuickSettingsButton: document.getElementById('saveQuickSettingsButton'),
+  emailUpdatesButton: document.getElementById('emailUpdatesButton'),
   errorText: document.getElementById('errorText')
 };
+
 const systemThemeMatcher = window.matchMedia('(prefers-color-scheme: dark)');
+
 initializePopup();
 
 elements.checkNowButton.addEventListener('click', handleCheckNow);
 elements.grantPermissionButton.addEventListener('click', handleGrantPermission);
 elements.saveQuickSettingsButton.addEventListener('click', handleSaveQuickSettings);
+
+if (elements.emailUpdatesButton) {
+  elements.emailUpdatesButton.addEventListener('click', handleEmailUpdates);
+}
+
 elements.themeSelect.addEventListener('change', async () => {
   applyTheme(elements.themeSelect.value);
   await handleSaveQuickSettings();
+});
+
+systemThemeMatcher.addEventListener('change', () => {
+  applyTheme(elements.themeSelect.value);
 });
 
 async function initializePopup() {
@@ -47,59 +59,11 @@ async function initializePopup() {
   elements.themeSelect.value = normalizeThemeMode(settings);
   applyTheme(elements.themeSelect.value);
 
-  renderState(data[STORAGE_KEYS.status] || {}, data[STORAGE_KEYS.latestUpdates] || []);
-}
-elements.saveQuickSettingsButton.addEventListener('click', handleSaveQuickSettings);
-systemThemeMatcher.addEventListener('change', () => {
-  applyTheme(elements.themeSelect.value);
-});
-
-async function handleEmailUpdates() {
-  const data = await chrome.storage.local.get(STORAGE_KEYS.latestUpdates);
-  const latestUpdates = data[STORAGE_KEYS.latestUpdates] || [];
-
-  if (!latestUpdates.length) {
-    setError('No updates to email yet.');
-    return;
-  }
-
-  const emailBody = formatEmailBody(latestUpdates);
-  const subject = encodeURIComponent('ELMS Updates');
-  const body = encodeURIComponent(emailBody);
-  const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
-
-  window.location.href = mailtoLink;
+  await refreshPopupState();
 }
 
-function formatEmailBody(updates) {
-  const lines = ['You have an update on ELMS. Check these courses:\n'];
-
-  // Group updates by course
-  const byCourse = {};
-  for (const update of updates) {
-    const course = update.courseName || 'Unknown course';
-    if (!byCourse[course]) {
-      byCourse[course] = [];
-    }
-    byCourse[course].push(update);
-  }
-
-  // Format each course and its updates
-  for (const [course, courseUpdates] of Object.entries(byCourse)) {
-    lines.push(`\n${course}`);
-    for (const update of courseUpdates) {
-      const type = capitalize(update.kind);
-      const time = update.timestamp ? new Date(update.timestamp).toLocaleString() : '';
-      lines.push(`  - ${update.title}`);
-      lines.push(`    ${type}${time ? ` • ${time}` : ''}`);
-    }
-  }
-
-  lines.push('\n\nDetected and saved locally by ELMS Notification Helper extension.');
-
-  return lines.join('\n');
-}
-elements.emailUpdatesButton.addEventListener('click', handleEmailUpdates);
+async function handleCheckNow() {
+  setError('');
   elements.checkNowButton.disabled = true;
   elements.checkNowButton.textContent = 'Checking...';
 
@@ -110,6 +74,8 @@ elements.emailUpdatesButton.addEventListener('click', handleEmailUpdates);
       setError('ELMS permission is required before checking.');
       return;
     }
+
+    await refreshBackground();
 
     const response = await chrome.runtime.sendMessage({ type: 'ELMS_CHECK_NOW' });
 
@@ -158,11 +124,38 @@ async function handleSaveQuickSettings() {
   });
 
   applyTheme(nextSettings.themeMode);
-
+  await refreshBackground();
   await refreshPopupState();
 }
 
+async function handleEmailUpdates() {
+  const data = await chrome.storage.local.get(STORAGE_KEYS.latestUpdates);
+  const latestUpdates = data[STORAGE_KEYS.latestUpdates] || [];
+
+  if (!latestUpdates.length) {
+    setError('No updates to email yet.');
+    return;
+  }
+
+  const emailBody = formatEmailBody(latestUpdates);
+  const subject = encodeURIComponent('ELMS Updates');
+  const body = encodeURIComponent(emailBody);
+
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
 async function refreshPopupState() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'ELMS_GET_STATE' });
+
+    if (response?.ok) {
+      renderState(response.status || {}, response.latestUpdates || []);
+      return;
+    }
+  } catch {
+    // Fall back to storage if the service worker is asleep.
+  }
+
   const data = await chrome.storage.local.get([STORAGE_KEYS.settings, STORAGE_KEYS.latestUpdates, STORAGE_KEYS.status]);
   renderState(data[STORAGE_KEYS.status] || {}, data[STORAGE_KEYS.latestUpdates] || []);
 }
@@ -234,7 +227,7 @@ async function requestElmsPermissionFromPopup() {
 
   try {
     const originPattern = new URL(baseUrl).origin + '/*';
-    return chrome.permissions.request({
+    return await chrome.permissions.request({
       origins: [originPattern]
     });
   } catch {
@@ -249,6 +242,37 @@ async function refreshBackground() {
   } catch {
     // The background service worker may be asleep.
   }
+}
+
+function formatEmailBody(updates) {
+  const lines = ['You have an update on ELMS. Check these courses:', ''];
+  const byCourse = {};
+
+  for (const update of updates) {
+    const course = update.courseName || 'Unknown course';
+
+    if (!byCourse[course]) {
+      byCourse[course] = [];
+    }
+
+    byCourse[course].push(update);
+  }
+
+  for (const [course, courseUpdates] of Object.entries(byCourse)) {
+    lines.push(course);
+
+    for (const update of courseUpdates) {
+      const type = capitalize(update.kind);
+      const time = update.timestamp ? new Date(update.timestamp).toLocaleString() : '';
+      lines.push(`- ${update.title}`);
+      lines.push(`  ${type}${time ? ` • ${time}` : ''}`);
+    }
+
+    lines.push('');
+  }
+
+  lines.push('Detected and saved locally by ELMS Notification Helper extension.');
+  return lines.join('\n');
 }
 
 function capitalize(value) {
@@ -278,7 +302,3 @@ function normalizeThemeMode(settings) {
 
   return 'system';
 }
-
-systemThemeMatcher.addEventListener('change', () => {
-  applyTheme(elements.themeSelect.value);
-});
