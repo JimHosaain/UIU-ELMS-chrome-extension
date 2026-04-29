@@ -1,10 +1,10 @@
 const SELECTORS = {
-  assignments: '.assignment-item',
-  notices: '.notice-item',
-  resources: '.resource-item',
-  quizzes: '.quiz-item',
-  calendarEvents: '.calendar-event, .event-item, [class*="event"], .fc-event, [data-event-id]',
-  courseTitle: '.course-title'
+  assignments: '[class*="assignment"], [class*="task"], [class*="work"], tbody tr',
+  notices: '[class*="announcement"], [class*="discussion"], [class*="forum"], [class*="notice"], td[onclick], tr[onclick]',
+  resources: '[class*="resource"], [class*="material"], [class*="content"], [class*="file"]',
+  quizzes: '[class*="quiz"], [class*="exam"], [class*="test"], [class*="assessment"]',
+  calendarEvents: '[class*="event"], [class*="calendar"], [class*="schedule"], [data-event-id]',
+  courseTitle: '[class*="course"], .title, h2, h3, h4'
 };
 
 const STORAGE_KEYS = {
