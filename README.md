@@ -236,11 +236,9 @@ This project is open source and available under the [MIT License](LICENSE).
 ## Credits
 
 **Developer:** Jim Hosaain  
-**University:** Islamic University of Technology (IUT)  
+**University:** United International University (UIU)  
 **Purpose:** Simplify ELMS notifications for UIU students
 
 ---
-
-**Made with ❤️ for UIU students**
 
 *Last Updated: April 2026*
